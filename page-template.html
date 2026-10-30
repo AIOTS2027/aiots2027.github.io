@@ -494,10 +494,11 @@ a:hover { color: var(--blue-pop); text-decoration: underline; }
 /* Cal dropdown */
 .cal-wrap { position: relative; display: inline-block; }
 .cal-dropdown {
-  display: none; position: absolute; top: calc(100% + 8px); left: 0;
+  display: none; position: fixed; top: 0; left: 0; z-index: 200;
   background: #FFFFFF; border: 1px solid var(--border); border-radius: 8px;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.25); min-width: 176px; overflow: hidden; z-index: 200;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.25); min-width: 176px; overflow: hidden;
 }
+.cal-dropdown.is-open { display: block; }
 .cal-dropdown a { display: block; padding: 11px 16px; color: #1C1008; font-size: 13.5px; border-bottom: 1px solid var(--border); }
 .cal-dropdown a:last-child { border-bottom: none; }
 .cal-dropdown a:hover { background: var(--bg-alt); text-decoration: none; }
@@ -714,7 +715,7 @@ section { scroll-margin-top: 60px; background: #FAF7F2; }
         Submit via EasyChair
       </a>
       <div class="cal-wrap" id="calWrap">
-        <button class="btn-ghost" id="calBtn" aria-haspopup="true" aria-expanded="false">
+        <button class="btn-ghost" id="calBtn" aria-haspopup="true" aria-expanded="false" aria-controls="calDropdown">
           <svg width="14" height="14" sc-camel-view-box="0 0 14 14" fill="none"><rect x="1.5" y="2" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"></rect><path d="M1.5 6h11M5 1v3M9 1v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"></path></svg>
           Add to Calendar
         </button>
@@ -726,6 +727,41 @@ section { scroll-margin-top: 60px; background: #FAF7F2; }
     </div>
   </div>
 </section>
+<script>
+  (() => {
+    const deadline = Date.parse('2027-03-23T12:00:00Z');
+
+    function updateCountdowns() {
+      const secondsLeft = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
+      const values = {
+        d: Math.floor(secondsLeft / 86400),
+        h: Math.floor((secondsLeft % 86400) / 3600),
+        m: Math.floor((secondsLeft % 3600) / 60),
+        s: secondsLeft % 60,
+      };
+
+      for (const countdown of document.querySelectorAll('.countdown')) {
+        for (const [unit, value] of Object.entries(values)) {
+          const display = countdown.querySelector(`#cd-${unit}`);
+          if (display) display.textContent = String(value).padStart(2, '0');
+        }
+      }
+    }
+
+    function scheduleNextUpdate() {
+      window.setTimeout(() => {
+        updateCountdowns();
+        scheduleNextUpdate();
+      }, 1000 - (Date.now() % 1000));
+    }
+
+    updateCountdowns();
+    scheduleNextUpdate();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) updateCountdowns();
+    });
+  })();
+</script>
 
 <!-- ════ ABOUT ════ -->
 <section id="about">
@@ -965,29 +1001,99 @@ section { scroll-margin-top: 60px; background: #FAF7F2; }
 </section>
 <script>
   (() => {
-    const deadline = Date.parse('2027-03-23T12:00:00Z');
-    const countdowns = Array.from(document.querySelectorAll('.countdown'));
+    const calendarEvent = {
+      title: 'AIoTS 2027: Artificial Intelligence and Industrial IoT Security Workshop',
+      dates: '20270629T090000/20270629T125000',
+      timezone: 'Europe/London',
+      location: 'Royal Holloway, University of London, Egham, Surrey, UK',
+      details: '9th International Workshop on Artificial Intelligence and Industrial IoT Security. Indicative program: 09:00–12:50.',
+    };
+    const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render');
+    googleCalendarUrl.searchParams.set('action', 'TEMPLATE');
+    googleCalendarUrl.searchParams.set('text', calendarEvent.title);
+    googleCalendarUrl.searchParams.set('dates', calendarEvent.dates);
+    googleCalendarUrl.searchParams.set('ctz', calendarEvent.timezone);
+    googleCalendarUrl.searchParams.set('location', calendarEvent.location);
+    googleCalendarUrl.searchParams.set('details', calendarEvent.details);
+    document.getElementById('gcalLink').href = googleCalendarUrl.toString();
 
-    function updateCountdowns() {
-      const secondsLeft = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
-      const values = {
-        d: Math.floor(secondsLeft / 86400),
-        h: Math.floor((secondsLeft % 86400) / 3600),
-        m: Math.floor((secondsLeft % 3600) / 60),
-        s: secondsLeft % 60,
-      };
+    const calendarWrap = document.getElementById('calWrap');
+    const calendarButton = document.getElementById('calBtn');
+    const calendarDropdown = document.getElementById('calDropdown');
+    const icsLink = document.getElementById('icsLink');
 
-      for (const countdown of countdowns) {
-        for (const [unit, value] of Object.entries(values)) {
-          const display = countdown.querySelector(`#cd-${unit}`);
-          if (display) display.textContent = String(value).padStart(2, '0');
-        }
-      }
+    function escapeIcsText(value) {
+      return value
+        .replace(/\\/g, '\\\\')
+        .replace(/;/g, '\\;')
+        .replace(/,/g, '\\,')
+        .replace(/\r?\n/g, '\\n');
     }
 
-    updateCountdowns();
-    window.setInterval(updateCountdowns, 1000);
+    const timestamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//AIoTS//AIoTS 2027//EN',
+      'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT',
+      'UID:aiots-2027-workshop@aiots2027.github.io',
+      `DTSTAMP:${timestamp}`,
+      'DTSTART:20270629T080000Z',
+      'DTEND:20270629T115000Z',
+      `SUMMARY:${escapeIcsText(calendarEvent.title)}`,
+      `LOCATION:${escapeIcsText(calendarEvent.location)}`,
+      `DESCRIPTION:${escapeIcsText(calendarEvent.details)}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+      '',
+    ].join('\r\n');
+    icsLink.href = URL.createObjectURL(new Blob([icsContent], { type: 'text/calendar;charset=utf-8' }));
+    icsLink.download = 'aiots-2027.ics';
+
+    document.body.append(calendarDropdown);
+
+    function positionCalendarMenu() {
+      const buttonRect = calendarButton.getBoundingClientRect();
+      const dropdownRect = calendarDropdown.getBoundingClientRect();
+      const edgeGap = 8;
+      const left = Math.max(edgeGap, Math.min(buttonRect.left, window.innerWidth - dropdownRect.width - edgeGap));
+      const below = buttonRect.bottom + edgeGap;
+      const top = below + dropdownRect.height <= window.innerHeight - edgeGap
+        ? below
+        : Math.max(edgeGap, buttonRect.top - dropdownRect.height - edgeGap);
+      calendarDropdown.style.left = `${left}px`;
+      calendarDropdown.style.top = `${top}px`;
+    }
+
+    function setCalendarMenuOpen(isOpen) {
+      calendarDropdown.classList.toggle('is-open', isOpen);
+      calendarButton.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen) positionCalendarMenu();
+    }
+
+    calendarButton.addEventListener('click', () => {
+      setCalendarMenuOpen(!calendarDropdown.classList.contains('is-open'));
+    });
+    document.addEventListener('click', (event) => {
+      if (event.target instanceof Node &&
+          !calendarWrap.contains(event.target) &&
+          !calendarDropdown.contains(event.target)) {
+        setCalendarMenuOpen(false);
+      }
+    });
+    window.addEventListener('resize', () => {
+      if (calendarDropdown.classList.contains('is-open')) positionCalendarMenu();
+    });
+    window.addEventListener('scroll', () => {
+      if (calendarDropdown.classList.contains('is-open')) positionCalendarMenu();
+    }, true);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && calendarDropdown.classList.contains('is-open')) {
+        setCalendarMenuOpen(false);
+        calendarButton.focus();
+      }
+    });
   })();
 </script>
-
 </body></html>
