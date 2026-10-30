@@ -1017,8 +1017,6 @@ section { scroll-margin-top: 60px; background: #FAF7F2; }
     googleCalendarUrl.searchParams.set('details', calendarEvent.details);
     document.getElementById('gcalLink').href = googleCalendarUrl.toString();
 
-    const calendarWrap = document.getElementById('calWrap');
-    const calendarButton = document.getElementById('calBtn');
     const calendarDropdown = document.getElementById('calDropdown');
     const icsLink = document.getElementById('icsLink');
 
@@ -1054,6 +1052,8 @@ section { scroll-margin-top: 60px; background: #FAF7F2; }
     document.body.append(calendarDropdown);
 
     function positionCalendarMenu() {
+      const calendarButton = document.getElementById('calBtn');
+      const calendarDropdown = document.getElementById('calDropdown');
       const buttonRect = calendarButton.getBoundingClientRect();
       const dropdownRect = calendarDropdown.getBoundingClientRect();
       const edgeGap = 8;
@@ -1067,31 +1067,36 @@ section { scroll-margin-top: 60px; background: #FAF7F2; }
     }
 
     function setCalendarMenuOpen(isOpen) {
+      const calendarButton = document.getElementById('calBtn');
+      const calendarDropdown = document.getElementById('calDropdown');
       calendarDropdown.classList.toggle('is-open', isOpen);
       calendarButton.setAttribute('aria-expanded', String(isOpen));
       if (isOpen) positionCalendarMenu();
     }
 
-    calendarButton.addEventListener('click', () => {
-      setCalendarMenuOpen(!calendarDropdown.classList.contains('is-open'));
-    });
     document.addEventListener('click', (event) => {
-      if (event.target instanceof Node &&
-          !calendarWrap.contains(event.target) &&
-          !calendarDropdown.contains(event.target)) {
+      if (!(event.target instanceof Element)) return;
+
+      if (event.target.closest('#calBtn')) {
+        setCalendarMenuOpen(!document.getElementById('calDropdown').classList.contains('is-open'));
+        return;
+      }
+
+      if (!document.getElementById('calWrap').contains(event.target) &&
+          !document.getElementById('calDropdown').contains(event.target)) {
         setCalendarMenuOpen(false);
       }
     });
     window.addEventListener('resize', () => {
-      if (calendarDropdown.classList.contains('is-open')) positionCalendarMenu();
+      if (document.getElementById('calDropdown').classList.contains('is-open')) positionCalendarMenu();
     });
     window.addEventListener('scroll', () => {
-      if (calendarDropdown.classList.contains('is-open')) positionCalendarMenu();
+      if (document.getElementById('calDropdown').classList.contains('is-open')) positionCalendarMenu();
     }, true);
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && calendarDropdown.classList.contains('is-open')) {
+      if (event.key === 'Escape' && document.getElementById('calDropdown').classList.contains('is-open')) {
         setCalendarMenuOpen(false);
-        calendarButton.focus();
+        document.getElementById('calBtn').focus();
       }
     });
   })();
