@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AIoTS 2027 — AI &amp; Industrial IoT Security Workshop</title>
 <script src="aea637eb-0c28-466c-abe7-a90116d67ab8"></script>
 <meta name="hz:slide-selector" content="[data-canvas-width]"><meta name="hz:canvas-width" content="1440"><meta name="hz:canvas-height" content="6000"></head>
@@ -412,6 +413,12 @@ a:hover { color: var(--blue-pop); text-decoration: underline; }
 .nav-cta:hover { filter: brightness(1.18); text-decoration: none !important; }
 @media (max-width: 900px) { .nav-hide { display: none; } }
 @media (max-width: 620px) { .nav-hide-sm { display: none; } }
+@media (max-width: 480px) {
+  .nav { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .nav-name { display: none; }
+  .nav-links { margin-right: 0; }
+  .nav-cta { white-space: nowrap; }
+}
 
 /* ── HERO ── */
 .hero {
@@ -473,6 +480,12 @@ a:hover { color: var(--blue-pop); text-decoration: underline; }
 }
 .cd-num { display: block; color: #fff; font-size: 32px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
 .cd-lbl { display: block; color: rgba(255,255,255,0.32); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 6px; }
+@media (max-width: 480px) {
+  .countdown { display: flex; width: 100%; gap: 8px; }
+  .cd-unit { flex: 1 1 0; min-width: 0; padding: 12px 4px; }
+  .cd-num { font-size: clamp(22px, 7vw, 28px); }
+  .cd-lbl { font-size: 9px; letter-spacing: 0.06em; }
+}
 
 /* ── BUTTONS ── */
 .btn-submit {
